@@ -1,0 +1,22 @@
+- connect to DB
+install Microsoft.EntityFrameworkCore.SqlServer
+install Microsoft.EntityFrameworkCore.Tools
+Scaffold-DbContext "Server=.\;Database=test;TrustServerCertificate=True;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -o Models
+dotnet ef dbcontext scaffold "Server=.\;Database=test;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -o Models 
+
+
+- create controller for both api or mvc
+
+
+
+
+
+
+
+- Scaffold-DbContext 
+[-Connection]	"Server=.\;Database=test;TrustServerCertificate=True;Trusted_Connection=True;"  
+[-Provider]	Microsoft.EntityFrameworkCore.SqlServer 
+[-OutputDir]	-OutputDir Models
+[-Context] [-Schemas>] [-Tables>] [-DataAnnotations] [-Force] [-Project] [-StartupProject] [<CommonParameters>]
+-connection string which includes 3 parts: DB Server, database name and security info
+-Trusted_Connection => Windows authentication

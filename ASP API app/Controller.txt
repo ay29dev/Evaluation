@@ -1,0 +1,12 @@
+1- DBContext
+// register the context in the builder in program.cs
+builder.Services.AddDbContext<TestContext>(options =>
+    options.UseSqlServer("Server=.\\;Database=test;TrustServerCertificate=True;Trusted_Connection=True;"));
+// in controller First Appronch
+ private readonly TestContext _context;
+ public EmpController(TestContext context) => _context = context;
+// seconed appronch without register the context in the builder
+TestContext _context = new TestContext();
+
+2- Add Endpoint
+
