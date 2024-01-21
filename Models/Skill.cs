@@ -10,4 +10,6 @@ public partial class Skill
     public string SkillType { get; set; } = null!;
 
     public string SkillTitle { get; set; } = null!;
+
+    public virtual ICollection<FormDt> FormDts { get; set; } = new List<FormDt>();
 }

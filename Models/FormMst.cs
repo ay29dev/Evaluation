@@ -12,4 +12,8 @@ public partial class FormMst
     public string KnowledgeType { get; set; } = null!;
 
     public int EmpId { get; set; }
+
+    public virtual Employee Emp { get; set; } = null!;
+
+    public virtual ICollection<FormDt> FormDts { get; set; } = new List<FormDt>();
 }

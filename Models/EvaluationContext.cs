@@ -62,6 +62,16 @@ public partial class EvaluationContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("skill_degree");
             entity.Property(e => e.SkillId).HasColumnName("skill_id");
+
+            entity.HasOne(d => d.Form).WithMany(p => p.FormDts)
+                .HasForeignKey(d => d.FormId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Form_dts_Form_mst");
+
+            entity.HasOne(d => d.Skill).WithMany(p => p.FormDts)
+                .HasForeignKey(d => d.SkillId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Form_dts_Skill");
         });
 
         modelBuilder.Entity<FormMst>(entity =>
@@ -78,6 +88,11 @@ public partial class EvaluationContext : DbContext
             entity.Property(e => e.KnowledgeType)
                 .HasMaxLength(250)
                 .HasColumnName("knowledge_type");
+
+            entity.HasOne(d => d.Emp).WithMany(p => p.FormMsts)
+                .HasForeignKey(d => d.EmpId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_mst_Emp");
         });
 
         modelBuilder.Entity<Skill>(entity =>

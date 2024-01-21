@@ -14,4 +14,6 @@ public partial class Employee
     public string EmpStep { get; set; } = null!;
 
     public string EmpDep { get; set; } = null!;
+
+    public virtual ICollection<FormMst> FormMsts { get; set; } = new List<FormMst>();
 }
