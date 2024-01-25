@@ -23,7 +23,8 @@ namespace Evaluation.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var emp = await _context.Employees.FindAsync(id);
+            //var emp = await _context.Employees.FindAsync(id);
+            var emp = await _context.Employees.Where(x => x.EmpId == id).FirstOrDefaultAsync();
             if (emp == null) return NotFound();
             return Ok(emp);
         }
