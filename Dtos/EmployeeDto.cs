@@ -2,7 +2,7 @@
 {
     public class EmployeeDto
     {
-        //public int EmpId { get; set; }
+        public int EmpId { get; set; }
 
         public string EmpName { get; set; } = null!;
 

@@ -18,7 +18,11 @@ namespace Evaluation.Controllers
 
         // GET: api/<SkillController>
         [HttpGet]
-        public async Task<IEnumerable<Skill>> Get() => await _context.Skills.ToListAsync();
+        public async Task<IEnumerable<Skill>> Get() => await _context.Skills.Select(s => new SkillDto
+        {
+            SkillTitle = s.SkillTitle,
+            SkillType = s.SkillType
+        }).ToListAsync();
 
         // GET api/<SkillController>/5
         [HttpGet("{id}")]

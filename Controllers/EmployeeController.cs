@@ -1,7 +1,10 @@
-﻿using Evaluation.Dtos;
+﻿using AutoMapper;
+using Evaluation.Dtos;
 using Evaluation.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static System.Reflection.Metadata.BlobBuilder;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,12 +15,35 @@ namespace Evaluation.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly EvaluationContext _context;
-        public EmployeeController(EvaluationContext context) => _context = context;
+        private readonly IMapper _mapper;
+        public EmployeeController(EvaluationContext context,IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
 
 
         // GET: api/<EmployeeController>
         [HttpGet]
         public async Task<IEnumerable<Employee>> Get() => await _context.Employees.ToListAsync();
+
+
+        //[HttpGet]
+        //public IActionResult GetMapped()
+        //{
+
+        //    var emps = _context.Employees.ToListAsync();
+        //    var empDto = _mapper.Map<List<EmployeeDto>>(emps);
+
+        //    var response = new
+        //    {
+        //        Message = $"تمت عملية استدعاء بيانات الموظفين بنجاح",
+        //        empDto
+        //    };
+
+        //    return Ok(response);
+        //}
+
 
         // GET api/<EmployeeController>/5
         [HttpGet("{id}")]
@@ -25,7 +51,8 @@ namespace Evaluation.Controllers
         {
             //var emp = await _context.Employees.FindAsync(id);
             var emp = await _context.Employees.Where(x => x.EmpId == id).FirstOrDefaultAsync();
-            if (emp == null) return NotFound();
+            //var emp = _mapper.Map<Employee>(_context.Employees.FirstOrDefaultAsync());
+
             return Ok(emp);
         }
 

@@ -1,14 +1,30 @@
 ﻿using Evaluation.Controllers;
+using Evaluation.Helper;
 using Evaluation.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+//builder.Services.AddControllers().AddJsonOptions(options =>
+//{
+//    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+//    options.JsonSerializerOptions.WriteIndented = true;
+//});
 
 builder.Services.AddControllers();
+builder.Services.AddAutoMapper(typeof(MappingProfiles));
+//builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.WriteIndented = true;
+});
 
 // register the context in the builder
 builder.Services.AddDbContext<EvaluationContext>(options =>
