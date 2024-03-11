@@ -1,8 +1,14 @@
-﻿using Evaluation.Controllers;
+﻿using Evaluation.General;
 using Evaluation.Helper;
+using Evaluation.Middleware;
 using Evaluation.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using System.Text.Json.Serialization;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,6 +26,40 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
+//var jwtKey = builder.Configuration.GetSection("JwtSettings:SecretKey").Get<string>();
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(options =>
+//    {
+//        options.RequireHttpsMetadata = false;
+//        options.SaveToken = true;
+//        options.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            ValidateIssuerSigningKey = true,
+//            IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
+//            ValidateIssuer = false,
+//            ValidateAudience = false
+//        };
+//    });
+var jwtIssuer = builder.Configuration.GetSection("JwtSettings:Issuer").Get<string>();
+var jwtKey = builder.Configuration.GetSection("JwtSettings:SecretKey").Get<string>();
+var jwtAudience = builder.Configuration.GetSection("JwtSettings:Audience").Get<string>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+ .AddJwtBearer(options =>
+ {
+     options.TokenValidationParameters = new TokenValidationParameters
+     {
+         ValidateIssuer = true,
+         ValidateAudience = true,
+         ValidateLifetime = true,
+         ValidateIssuerSigningKey = true,
+         ValidIssuer = jwtIssuer,
+         ValidAudience = jwtAudience,
+         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+     };
+ });
+builder.Services.AddSingleton<IAppLogger, AppLogger>();
+//builder.Services.AddScoped<IAppLogger, AppLogger>();
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -41,7 +81,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<ErrorHandler>();
 
 app.MapControllers();
 

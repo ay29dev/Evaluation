@@ -16,7 +16,7 @@ namespace Evaluation.Controllers
     {
         private readonly EvaluationContext _context;
         private readonly IMapper _mapper;
-        public EmployeeController(EvaluationContext context,IMapper mapper)
+        public EmployeeController(EvaluationContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -77,12 +77,21 @@ namespace Evaluation.Controllers
         public async Task<IActionResult> Put(int id, [FromBody] EmployeeDto dto)
         {
             var emp = await _context.Employees.FindAsync(id);
-            if (emp == null) return NotFound($"The emp ID not found: {id}");
-
+            if (emp == null)
+            {
+                return NotFound($"The emp ID not found: {id}");
+                //var resp = new HttpResponseMessage(System.Net.HttpStatusCode.NotFound)
+                //{
+                //    Content = new StringContent(string.Format("No error", emp.EmpName)),
+                //    ReasonPhrase = "new reason phrase"
+                //};
+                //throw new HttpResponseException(resp);
+            }
             emp.EmpName = dto.EmpName;
             emp.EmpTitle = dto.EmpTitle;
             emp.EmpDep = dto.EmpDep;
             emp.EmpStep = dto.EmpStep;
+
 
             _context.SaveChanges();
             return Ok(emp);

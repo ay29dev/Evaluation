@@ -1,0 +1,2 @@
+^[3/11/2024 10:18:41 AM]	[GET]	[localhost:7223]	[/api/Skill/1]	[404]	[varName]	[]	[{"Message":"varName KeyNotFound"}]$
+^[3/11/2024 10:18:57 AM]	[GET]	[localhost:7223]	[/api/Skill/1234]	[404]	[varName]	[]	[{"Message":"varName KeyNotFound"}]$
