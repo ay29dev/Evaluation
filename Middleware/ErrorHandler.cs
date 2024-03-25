@@ -1,8 +1,26 @@
 ﻿using Evaluation.General;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.Net;
 
 namespace Evaluation.Middleware;
+
+
+public class DuplicateException : Exception
+{
+    public DuplicateException(string message)
+        : base(message)
+    {
+    }
+}
+
+public class LogicException : Exception
+{
+    public LogicException(string message)
+        : base(message)
+    {
+    }
+}
 
 public class ErrorHandler
 {
@@ -29,10 +47,10 @@ public class ErrorHandler
 
             switch (exception)
             {
-                //case LogicException:
-                //    response.StatusCode = (int)HttpStatusCode.NotAcceptable;
-                //    objectResult = new { exception.Message };
-                //    break;
+                case LogicException:
+                    response.StatusCode = (int)HttpStatusCode.NotAcceptable;
+                    objectResult = new { exception.Message };
+                    break;
 
                 case KeyNotFoundException:
                     response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -43,18 +61,24 @@ public class ErrorHandler
                     response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     objectResult = new { exception.Message };
                     break;
+                case SecurityTokenExpiredException:
+                    //HttpContext.Response.StatusCode = StatusCodes.Status406NotAcceptable;
+                    //return new EmptyResult();
+                    response.StatusCode = (int)HttpStatusCode.NotAcceptable;
+                    objectResult = new { exception.Message };
+                    break;
 
-                //case DuplicateException:
-                //    response.StatusCode = (int)HttpStatusCode.Conflict;
-                //    objectResult = new
-                //    {
-                //Errors = new List<Error>
-                //{
-                //    new Error(string.Concat(exception.Message[0].ToString().ToLower(),
-                //        exception.Message.AsSpan(1)), new() { ErrorCode.Duplicate })
-                //}
-                //};
-                //break;
+                case DuplicateException:
+                    response.StatusCode = (int)HttpStatusCode.Conflict;
+                    objectResult = new
+                    {
+                        //        Errors = new List<Error>
+                        //{
+                        //    new Error(string.Concat(exception.Message[0].ToString().ToLower(),
+                        //        exception.Message.AsSpan(1)), new() { ErrorCode.Duplicate })
+                        //}
+                    };
+                    break;
 
                 default:
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;

@@ -2,10 +2,26 @@
 install Microsoft.EntityFrameworkCore.SqlServer
 install Microsoft.EntityFrameworkCore.Tools
 Scaffold-DbContext "Server=.\;Database=test;TrustServerCertificate=True;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -o Models
+Scaffold-DbContext "Server=.;Database=VSS;User Id=sa;Password=123;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Models -f
+
 dotnet ef dbcontext scaffold "Server=.\;Database=test;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -o Models 
 
+register the dbContext in program.cs
+builder.Services.AddDbContext<EvaluationContext>(options =>
+    options.UseSqlServer("Server=.\\;Database=Evaluation;TrustServerCertificate=True;Trusted_Connection=True;"));
 
-- create controller for both api or mvc
+
+- Add the auth process as the UserController containe
+    - TOKEN process
+    - Register action
+    - Login action
+    - Change Password action
+    - Forget Password (reset) action
+    - OTP (send and confirm) action
+- Add Error handler Middlerware with Logger to file
+- Add General class in Service folder
+- Create Dto folder contain In folder and Out folder
+- Create controller for both api or mvc
 
 
 

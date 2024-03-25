@@ -40,6 +40,7 @@ builder.Services.AddSwaggerGen();
 //            ValidateAudience = false
 //        };
 //    });
+
 var jwtIssuer = builder.Configuration.GetSection("JwtSettings:Issuer").Get<string>();
 var jwtKey = builder.Configuration.GetSection("JwtSettings:SecretKey").Get<string>();
 var jwtAudience = builder.Configuration.GetSection("JwtSettings:Audience").Get<string>();
@@ -58,6 +59,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
      };
  });
+
+
+
 builder.Services.AddSingleton<IAppLogger, AppLogger>();
 //builder.Services.AddScoped<IAppLogger, AppLogger>();
 builder.Services.AddControllers().AddJsonOptions(options =>

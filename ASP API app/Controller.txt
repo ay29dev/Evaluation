@@ -8,5 +8,20 @@ builder.Services.AddDbContext<TestContext>(options =>
 // seconed appronch without register the context in the builder
 TestContext _context = new TestContext();
 
+
 2- Add Endpoint
 
+
+
+* Use autoMapper
+- install AutoMapper.Extensions.Microsoft.DependencyInjection
+- create mapper profile
+- use it in controller
+
+
+
+* convert startup code to program code 
+add builder to servive and captilize the S in services
+services.AddAuthentication
+to
+builder.Services.AddAuthentication

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Evaluation.Middleware;
+namespace Evaluation.General;
 
 public interface IAppLogger
 {

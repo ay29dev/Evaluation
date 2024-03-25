@@ -1,10 +1,13 @@
 ﻿using Evaluation.Dtos;
+using Evaluation.General;
 using Evaluation.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NuGet.Common;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 
@@ -15,7 +18,7 @@ namespace Evaluation.Controllers
     [ApiController]
     public class SkillController : ControllerBase
     {
-        private readonly JwtSecurityTokenHandler tokenHandler;
+        private readonly JwtSecurityTokenHandler _tokenHandler;
         private readonly EvaluationContext _context;
         private readonly IConfiguration _config;
 
@@ -23,33 +26,33 @@ namespace Evaluation.Controllers
         {
             _context = context;
             _config = config;
-            tokenHandler = new JwtSecurityTokenHandler();
+            _tokenHandler = new JwtSecurityTokenHandler();
         }
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> LoginUser()
-        {
-            var token = GenerateJwtToken();
-            return Ok(new { token });
-        }
-        // GET: api/<SkillController>
+
+        [Authorize]
         [HttpGet]
-        public async Task<IEnumerable<Skill>> Get() => await _context.Skills.ToListAsync();
+        public async Task<IActionResult> GetAllSkills([FromHeader] string Authorization)
+        {
+            string token = Authorization.Replace("Bearer ", "");
+            if (!VerifyExpToken(token)) throw new SecurityTokenExpiredException("انتهت صلاحية التوكن");
+            IList<Claim> tokenInfo = GetClaims(token);
 
-        // GET api/<SkillController>/5
+            return Ok(await _context.Skills.ToListAsync());
+        }
+
         [Authorize]
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int varName, [FromHeader] string Authorization)
+        public async Task<IActionResult> GetDetailsSkillById(int id, [FromHeader] string Authorization)
         {
-            //var y = VerifyToken(Authorization.Replace("Bearer ", ""));
-            var x = TokenInfo(Authorization.Replace("Bearer ", ""));
-            if (true)
-            {
-                throw new KeyNotFoundException(nameof(varName));
-            }
-            var skill = await _context.Skills.FindAsync(varName);
-            if (skill == null) return NotFound();
-            return Ok(skill);
+            string token = Authorization.Replace("Bearer ", "");
+            if (!VerifyExpToken(token)) throw new SecurityTokenExpiredException("انتهت صلاحية التوكن");
+            IList<Claim> tokenInfo = GetClaims(token);
+
+            // DateTime.UtcNow.AddHours(3),
+            var skill = await _context.Skills.FindAsync(id);
+            if (skill == null) throw new KeyNotFoundException("المهارة المطلوبة غير موجودة");
+            return Ok(new { skill, tokenInfo });
         }
 
         // POST api/<SkillController>
@@ -94,88 +97,86 @@ namespace Evaluation.Controllers
             return Ok(skill);
         }
 
-        private string GenerateJwtToken()
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, "new subject"),
-                new Claim(JwtRegisteredClaimNames.UniqueName, "new unique name"),
-                new Claim(JwtRegisteredClaimNames.GivenName, "new name")
-            };
-
-
-            var Sectoken = new JwtSecurityToken(
-              issuer: _config["JwtSettings:Issuer"],
-              audience: _config["JwtSettings:Audience"],
-              claims: claims,
-              notBefore: DateTime.UtcNow,//.AddHours(3),
-              expires: DateTime.UtcNow.AddMonths(3),
-              signingCredentials: credentials);
-
-            var token = new JwtSecurityTokenHandler().WriteToken(Sectoken);
-            return token;
-        }
-
-        private IActionResult TokenInfo(string tokenUser)
-        {
-            //string jwtToken = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.ReadJwtToken(tokenUser);
-
-            //string subject = token.Subject;
-            //string issuer = token.Issuer;
-            //string audience = token.Audiences == null ? "" : string.Join(",", token.Audiences);
-            DateTime validFrom = token.ValidFrom;
-            DateTime validTo = token.ValidTo;
-            IEnumerable<Claim> claims = token.Claims;
-
-            return Ok(
-                new
-                {
-                    //Subject = subject,
-                    //Issuer = issuer,
-                    //Audience = audience,
-                    validFrom,
-                    validTo,
-                    claims
-                });
-
-        }
-
-        private ClaimsPrincipal VerifyToken(string token)
+        private bool VerifyExpToken(string token)
         {
             try
             {
-                var claims = tokenHandler.ValidateToken(token,
+                var claims = _tokenHandler.ValidateToken(token,
                 new TokenValidationParameters
                 {
-                    ValidateIssuerSigningKey = true,
-                    //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("$aaaAAAbbbBBmnbmnbmnbm7868768768768768hjhgB@#$%12345")),
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"])),
+                    ValidIssuer = _config["JwtSettings:Issuer"],
+                    ValidAudience = _config["JwtSettings:Audience"],
+                    ValidateIssuerSigningKey = true,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
                     ValidateLifetime = true,
-                    ValidateAudience = false,
-                    ValidateIssuer = false,
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
-                return claims;
+                return true;
             }
             catch (SecurityTokenExpiredException er)
             {
-                var identity = new ClaimsIdentity();
-                identity.AddClaim(new Claim("exp", "SecurityTokenExpiredException"));
-                var newPrincipal = new ClaimsPrincipal(identity);
-                return newPrincipal;
-            }
-            catch (Exception er)
-            {
-                var identity = new ClaimsIdentity();
-                identity.AddClaim(new Claim(JwtRegisteredClaimNames.UniqueName, er.Message));
-                var newPrincipal = new ClaimsPrincipal(identity);
-                return newPrincipal;
+                return false;
             }
         }
+
+        public IList<Claim> GetClaims(string tokenUser)
+        {
+            var claims = _tokenHandler.ReadJwtToken(tokenUser).Claims;
+            return claims.ToList();
+        }
+
+        //private ClaimsPrincipal VerifyToken(string token)
+        //{
+        //    try
+        //    {
+        //        var claims = _tokenHandler.ValidateToken(token,
+        //        new TokenValidationParameters
+        //        {
+        //            ValidateIssuerSigningKey = true,
+        //            //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("$aaaAAAbbbBBmnbmnbmnbm7868768768768768hjhgB@#$%12345")),
+        //            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"])),
+        //            ValidateLifetime = true,
+        //            ValidateAudience = false,
+        //            ValidateIssuer = false,
+        //            ClockSkew = TimeSpan.Zero
+        //        }, out SecurityToken validatedToken);
+        //        return claims;
+        //    }
+        //    catch (SecurityTokenExpiredException er)
+        //    {
+        //        var identity = new ClaimsIdentity();
+        //        identity.AddClaim(new Claim("exp", "SecurityTokenExpiredException"));
+        //        var newPrincipal = new ClaimsPrincipal(identity);
+        //        return newPrincipal;
+        //    }
+        //    catch (Exception er)
+        //    {
+        //        var identity = new ClaimsIdentity();
+        //        identity.AddClaim(new Claim(JwtRegisteredClaimNames.UniqueName, er.Message));
+        //        var newPrincipal = new ClaimsPrincipal(identity);
+        //        return newPrincipal;
+        //    }
+        //}
+
+        //public ClaimsPrincipal TokenInfo(string tokenUser)
+        //{
+        //    var token = _tokenHandler.ReadJwtToken(tokenUser);
+
+        //    var claims = _tokenHandler.ValidateToken(tokenUser,
+        //        new TokenValidationParameters
+        //        {
+        //            ValidateIssuerSigningKey = true,
+        //            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"])),
+        //            ValidateLifetime = true,
+        //            ValidateAudience = false,
+        //            ValidateIssuer = false,
+        //            ClockSkew = TimeSpan.Zero
+        //        }, out SecurityToken validatedToken);
+        //    return claims;
+        //}
+
 
     }
 }
